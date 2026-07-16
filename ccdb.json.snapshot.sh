@@ -63,10 +63,11 @@ generate_info() {
 # ================================ OPTIONS =====================================
 CCDB_HOST='alice-ccdb.cern.ch'
 CCDB_PATH='GLO/Config/GRPLHCIF'
+# CCDB_PATH='RCT/Info/RunInformation'
 
 # Lower/Upper timestamp, any format accepted by 'date --date=STRING'
 TS_LOWER='2026-03-01'
-TS_UPPER='2026-06-30'
+TS_UPPER='2026-07-01'
 # TS_LOWER="0"       # minimum timestamp, special case for '1970-01-01'
 # TS_UPPER="$(date)" # maximum timestamp, current time
 
@@ -78,7 +79,7 @@ DATE_FMT="+%F %T.%3N%:z" # 2026-07-15 21:47:52.718+02:00
 TS_LOWER="$(ts_human_format "${TS_LOWER}")" # only for uniform formatting
 TS_UPPER="$(ts_human_format "${TS_UPPER}")" # only for uniform formatting
 CCDB_URL="http://${CCDB_HOST}/browse/${CCDB_PATH}"
-SNAPSHOT_FILE="${SNAPSHOT_BASE}/${CCDB_PATH}/snapshot.json"
+SNAPSHOT_FILE="${SNAPSHOT_BASE}/${CCDB_PATH}/snapshot.tmp.json"
 curl_ccdb
 
 TS_LOWER_CHECK="$(jq -r '.objects[-1].Created' "${SNAPSHOT_FILE}")"
@@ -86,8 +87,8 @@ TS_UPPER_CHECK="$(jq -r '.objects[0].Created' "${SNAPSHOT_FILE}")"
 # uuid_time "$(jq -r '.objects[-1].id' "${SNAPSHOT_FILE}")"
 # uuid_time "$(jq -r '.objects[0].id' "${SNAPSHOT_FILE}")"
 
-SNAPSHOT_FILE_CHECK="${SNAPSHOT_FILE%.*}_${TS_LOWER_CHECK}-${TS_UPPER_CHECK}.${SNAPSHOT_FILE##*.}"
-# /path/to/snapshot.json => /path/to/snapshot_LOWER-UPPER.json
+SNAPSHOT_FILE_CHECK="${SNAPSHOT_FILE%.tmp.json}.${TS_LOWER_CHECK}-${TS_UPPER_CHECK}.json"
+# /path/to/snapshot.tmp.json => /path/to/snapshot.LOWER-UPPER.json
 mv "${SNAPSHOT_FILE}" "${SNAPSHOT_FILE_CHECK}" \
   && printf "Renaming snapshot file\n  to: '%s'\n" "${SNAPSHOT_FILE_CHECK}"
 touch --date="@${TS_UPPER_CHECK:0:-3}" "${SNAPSHOT_FILE_CHECK}"
