@@ -62,8 +62,8 @@ generate_info() {
 
 # ================================ OPTIONS =====================================
 CCDB_HOST='alice-ccdb.cern.ch'
-CCDB_PATH='GLO/Config/GRPLHCIF'
-# CCDB_PATH='RCT/Info/RunInformation'
+CCDB_PATH='GLO/Config/GRPLHCIF' # General Run Parameters from LHC InterFace data
+# CCDB_PATH='RCT/Info/RunInformation' # Run Condition Table
 
 # Lower/Upper timestamp, any format accepted by 'date --date=STRING'
 TS_LOWER='2026-03-01'
