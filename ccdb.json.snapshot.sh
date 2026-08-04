@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# 2026-07-16
+# 2026-08-08
 
 ts_human_to_millis() {
   # "2026-07-15 21:47:52.718+02:00" => 1784144872718
@@ -12,6 +12,11 @@ ts_millis_to_human() {
   local ts="$1"
   date --date="@${ts:0:-3}.${ts: -3}" "${DATE_FMT}"
   #                        ${ts: -3}=${ts:${#ts}-3}=${ts:13-3}
+}
+ts_millis_to_human_short() {
+  # 1784144872718 => "2026-07"
+  local ts="$1"
+  date --date="@${ts:0:-3}" "+%4Y-%m"
 }
 ts_human_format() {
   # 2026-06-30 (or any other format) => "2026-06-30 00:00:00.000+02:00"
@@ -38,7 +43,7 @@ curl_ccdb() {
     --header "If-Not-After: ${ts_upper_millis}"  # creation timestamp <=
   )
 
-  printf "Downloading CCDB snapshot\nfrom: '%s'\n" "${CCDB_URL}"
+  printf "\nDownloading CCDB snapshot\nfrom: '%s'\n" "${CCDB_URL}"
   curl --silent "${curl_headers[@]}" "${CCDB_URL}" \
     --create-dirs --output "${SNAPSHOT_FILE}" \
     --write-out "  to: '%{filename_effective}' (%{size_download} bytes)\n"
@@ -59,19 +64,32 @@ generate_info() {
   printf "Writing snapshot info\n  to: '%s'\n\n" "${snapshot_file_info}"
   cat "${snapshot_file_info}"
 }
+generate_link() {
+  local link_file
+  local ts_lower_short
+  local ts_upper_short
+  ts_lower_short="$(ts_millis_to_human_short "${TS_LOWER_CHECK}")"
+  ts_upper_short="$(ts_millis_to_human_short "${TS_UPPER_CHECK}")"
+  link_file="${SNAPSHOT_FILE%.tmp.json}.${ts_lower_short}.to.${ts_upper_short}.json"
+  # /path/to/snapshot.tmp.json => /path/to/snapshot.lower.to.upper.json
+
+  ln -sf "${SNAPSHOT_FILE_CHECK##*/}" "${link_file}" \
+    && printf "Creating symlink to snapshot file\nlink: '%s'\n" "${link_file}"
+  # snapshot.LOWER-UPPER.json (basename) => /path/to/snapshot.lower.to.upper.json
+}
 
 # ================================ OPTIONS =====================================
-CCDB_HOST='alice-ccdb.cern.ch'
-CCDB_PATH='GLO/Config/GRPLHCIF' # General Run Parameters from LHC InterFace data
-# CCDB_PATH='RCT/Info/RunInformation' # Run Condition Table
+# Override environment variables before execution (or use default example values if unset)
+CCDB_HOST="${CCDB_HOST:-alice-ccdb.cern.ch}"
+CCDB_PATH="${CCDB_PATH:-GLO/Config/GRPLHCIF}"
 
 # Lower/Upper timestamp, any format accepted by 'date --date=STRING'
-TS_LOWER='2026-03-01'
-TS_UPPER='2026-07-01'
-# TS_LOWER="0"       # minimum timestamp, special case for '1970-01-01'
-# TS_UPPER="$(date)" # maximum timestamp, current time
+TS_LOWER="${TS_LOWER:-2026-03-01}"
+TS_UPPER="${TS_UPPER:-2026-07-01}"
+# TS_LOWER="${TS_LOWER:-0}"       # minimum timestamp, special case for '1970-01-01'
+# TS_UPPER="${TS_UPPER:-$(date)}" # maximum timestamp, current time
 
-SNAPSHOT_BASE="${HOME}/ALICE-DATA/ccdb"
+SNAPSHOT_BASE="${SNAPSHOT_BASE:-${HOME}/ALICE-DATA-EXAMPLE/ccdb}"
 # ==============================================================================
 
 DATE_FMT="+%F %T.%3N%:z" # 2026-07-15 21:47:52.718+02:00
@@ -79,7 +97,8 @@ DATE_FMT="+%F %T.%3N%:z" # 2026-07-15 21:47:52.718+02:00
 TS_LOWER="$(ts_human_format "${TS_LOWER}")" # only for uniform formatting
 TS_UPPER="$(ts_human_format "${TS_UPPER}")" # only for uniform formatting
 CCDB_URL="http://${CCDB_HOST}/browse/${CCDB_PATH}"
-SNAPSHOT_FILE="${SNAPSHOT_BASE}/${CCDB_PATH}/snapshot.tmp.json"
+# SNAPSHOT_FILE="${SNAPSHOT_BASE}/${CCDB_PATH}/snapshot.tmp.json"
+SNAPSHOT_FILE="${SNAPSHOT_BASE}/${CCDB_PATH}/${CCDB_PATH//\//.}.tmp.json"
 curl_ccdb
 
 TS_LOWER_CHECK="$(jq -r '.objects[-1].Created' "${SNAPSHOT_FILE}")"
@@ -93,4 +112,5 @@ mv "${SNAPSHOT_FILE}" "${SNAPSHOT_FILE_CHECK}" \
   && printf "Renaming snapshot file\n  to: '%s'\n" "${SNAPSHOT_FILE_CHECK}"
 touch --date="@${TS_UPPER_CHECK:0:-3}" "${SNAPSHOT_FILE_CHECK}"
 
+generate_link
 generate_info
