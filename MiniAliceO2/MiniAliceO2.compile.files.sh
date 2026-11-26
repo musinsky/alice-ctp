@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# 2026-11-25
+# 2026-11-26
 # shellcheck disable=SC2046
 
 set -e -x
@@ -20,5 +20,6 @@ rootcling -f "G__${OUT_NAME}.cxx" \
   DataFormats/common/include/CommonDataFormat/BunchFilling.h \
   LinkDef.h
 
+# g++ -fPIC -shared "G__${OUT_NAME}.cxx" DataFormats/common/src/BunchFilling.cxx "${INC[@]}" \
 g++ -fPIC -shared "G__${OUT_NAME}.cxx" "${INC[@]}" \
   -o "lib${OUT_NAME}.so" $(root-config --cflags --libs)

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# 2026-11-25
+# 2026-11-26
 
 curl_file() {
   local file="${1}"
@@ -40,4 +40,22 @@ curl_file "GPU/Common/GPUCommonDef.h"         # header only file
 curl_file "GPU/Common/GPUCommonDefSettings.h" # header only file
 curl_file "GPU/Common/GPUCommonDefAPI.h"      # header only file
 
-tree -- */ > "${PWD##*/}.structure.tree" # SC2035 correct
+# specific source file (need only for modify/create fake BunchFilling scheme)
+BF_SRC="DataFormats/common/src/BunchFilling.cxx"
+curl_file "${BF_SRC}"
+cp -p "${BF_SRC}" "${BF_SRC}.orig"
+# == Logger (fairlogger) ==
+# replace all LOG(...) with std::cout + replace/add #include <iostream> in source file
+sed -i 's|LOG([^)]*)|std::cout|' "${BF_SRC}"
+sed -i '/#include.*Logger\.h/ s|.*|#include <iostream>|' "${BF_SRC}"
+# == fmt::format ==
+# option 1
+# dnf install fmt-devel
+# use original fmt::format + add #include <fmt/format.h> in source file
+# option 2
+# replace original fmt::format with std::format + add #include <format> in source file
+sed -i 's|fmt::format|std::format|' "${BF_SRC}"
+LN="$(grep -n '#include' "${BF_SRC}" | tail -n1 | cut -d: -f1)"
+sed -i "${LN}a #include <format>" "${BF_SRC}"
+
+tree --dirsfirst -F -I build -I MiniAliceO2\* "../${PWD##*/}" > "${PWD##*/}.contents.tree"

@@ -1,0 +1,31 @@
+../MiniAliceO2/
+├── Common/
+│   ├── Constants/
+│   │   └── include/
+│   │       └── CommonConstants/
+│   │           └── LHCConstants.h
+│   └── Types/
+│       └── include/
+│           └── CommonTypes/
+│               └── Units.h
+├── DataFormats/
+│   ├── Parameters/
+│   │   └── include/
+│   │       └── DataFormatsParameters/
+│   │           └── GRPLHCIFData.h
+│   └── common/
+│       ├── include/
+│       │   └── CommonDataFormat/
+│       │       └── BunchFilling.h
+│       └── src/
+│           ├── BunchFilling.cxx
+│           └── BunchFilling.cxx.orig
+├── GPU/
+│   └── Common/
+│       ├── GPUCommonDef.h
+│       ├── GPUCommonDefAPI.h
+│       └── GPUCommonDefSettings.h
+├── CMakeLists.txt
+└── LinkDef.h
+
+18 directories, 11 files
